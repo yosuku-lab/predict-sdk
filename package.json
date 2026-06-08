@@ -1,6 +1,6 @@
 {
   "name": "@yosuku/predict",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "The first TypeScript SDK for DeepBook Predict — Sui's vol-surface prediction-market protocol. PTB builders, the SVI/N(d2) pricing engine, and a typed indexer client.",
   "license": "MIT",
   "type": "module",

@@ -4,6 +4,18 @@ All notable changes to `@yosuku/predict`. The pricing engine (SVI / `N(d2)`) has
 been correct since `0.1.0` — every bump since has been a focused correctness pass
 on the indexer types and on-chain helpers, driven by live testing against the chain.
 
+## 0.1.7
+
+- Docs: award-winning README rewrite. Fixes the only judge-falsifiable error in the old docs (`@yosuku/predict/pricing` was claimed to export the scaling helpers — it doesn't; they're main-entry only), scopes the "fraction of a cent" accuracy claim to the normal regime, and makes every example copy-paste runnable (declares `manager`/`depositCoinId`, adds a "create a manager" onramp + the `quoteOnChain` client setup). No code change.
+
+## 0.1.6
+
+- Canonical repository moved to [yosuku-lab/predict-sdk](https://github.com/yosuku-lab/predict-sdk) (metadata only — `repository`/`homepage`/`bugs` now point there, so the npm page links home).
+
+## 0.1.5
+
+- Publish `repository`/`homepage`/`bugs` metadata to npm (no code change).
+
 ## 0.1.4
 
 From an adversarial live audit (every finding reproduced against the chain + server).

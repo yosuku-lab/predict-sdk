@@ -1,35 +1,123 @@
+<div align="center">
+
 # @yosuku/predict
 
-**The first TypeScript SDK for [DeepBook Predict](https://docs.sui.io/onchain-finance/deepbook-predict/)** — Sui's vol-surface-priced prediction-market protocol.
+### The first TypeScript SDK for [DeepBook Predict](https://docs.sui.io/onchain-finance/deepbook-predict/) — Sui's volatility-surface-priced prediction market.
 
-The official `@mysten/deepbook-v3` SDK has **zero** Predict support. This fills the gap: composable PTB builders, a typed indexer client, and an SVI/`N(d2)` pricing engine **verified against the on-chain quote to within a fraction of a cent** (≤ 0.5¢, often < 0.1¢) — and against a real signed mint.
+[![npm](https://img.shields.io/npm/v/@yosuku/predict?color=cb3837&logo=npm)](https://www.npmjs.com/package/@yosuku/predict)
+[![types](https://img.shields.io/badge/types-included-3178c6?logo=typescript&logoColor=white)](https://www.npmjs.com/package/@yosuku/predict)
+[![Sui](https://img.shields.io/badge/Sui-testnet-4DA2FF)](https://sui.io)
+[![license](https://img.shields.io/badge/license-MIT-blue)](#license)
+
+**Price any strike. Open a position. Crank gas-negative redeems.** In a handful of lines —
+with pricing math cross-checked against the chain's own `get_trade_amounts`.
+
+[**npm**](https://www.npmjs.com/package/@yosuku/predict) · [**Repo**](https://github.com/yosuku-lab/predict-sdk) · [**DeepBook Predict docs**](https://docs.sui.io/onchain-finance/deepbook-predict/)
+
+</div>
+
+---
+
+## Why this exists
+
+DeepBook Predict prices **every** strike and expiry off a live SVI volatility surface — there's no "odds" endpoint to fetch. To trade it from TypeScript, you'd be reimplementing, by hand, from Move source:
+
+- the SVI surface decode + the Black-Scholes digital `N(d2)`,
+- the Bernoulli round-trip spread,
+- `market_key` / `range_key` construction, and
+- the exact PTB argument order for every `mint` / `redeem` / `supply` call.
+
+The official `@mysten/deepbook-v3` SDK ships **none** of it. `@yosuku/predict` is that missing layer — and the pricing engine is **cross-checked against the contract's own `get_trade_amounts`**, so the number you show a user is the number the chain charges.
+
+## Install
 
 ```bash
 npm install @yosuku/predict @mysten/sui
 ```
 
-## Place a bet in 6 lines
+> **Peer dep:** requires `@mysten/sui` `^2.17.0` — the SDK builds PTBs and runs `devInspect` through it.
+> **Zero config otherwise:** the verified testnet deployment (package, `Predict` object, registry, DUSDC type, clock, indexer) is baked in, so `new PredictClient()` just works.
+
+## Before you start
+
+DeepBook Predict is testnet-only and settles in **DUSDC** (*not* DEEP, *not* Spot's DBUSDC). Three one-time prerequisites for the examples below:
+
+1. **Get DUSDC** from the [faucet](https://tally.so/r/Xx102L) → gives you a `Coin<DUSDC>` (`depositCoinId` is its object id).
+2. **Create a `PredictManager`** once — it holds your positions. `createManager` mutates a tx; the id comes from the executed result:
+
+```ts
+import { Transaction } from '@mysten/sui/transactions';
+
+const tx = new Transaction();
+predict.createManager(tx);          // mutates tx (returns void)
+const res = await signAndExecute(tx);
+const manager = res.objectChanges
+  ?.find((c) => c.type === 'created' && c.objectType.includes('::predict_manager::PredictManager'))
+  ?.objectId;                        // reuse this id forever
+```
+
+## Quote a market → open a position
 
 ```ts
 import { PredictClient, usdToScaled, contracts } from '@yosuku/predict';
 
-const predict = new PredictClient();                       // verified testnet config baked in
-const oracle = (await predict.indexer.activeOracles())[0]; // a live BTC oracle
-const q = await predict.quote(oracle.oracle_id, 63000);    // off-chain N(d2): { upAsk, upBid, fair }
+const predict = new PredictClient();                          // testnet config baked in
+const oracle  = (await predict.indexer.activeOracles())[0];   // a live BTC market
+
+// 1 · price it — off-chain SVI / N(d2). No funds, no signing.
+const q = await predict.quote(oracle.oracle_id, 63_000);
+//   → { fair: 0.487 (≈ 48.7% / $0.487 a contract), upAsk, upBid, dnAsk, dnBid, roundTrip, forward }
+
+// 2 · open UP in one self-contained PTB.
+const tx = predict.openUp({
+  manager,                          // your PredictManager id (from "Before you start")
+  oracle: oracle.oracle_id,
+  expiry: BigInt(oracle.expiry),    // expiry is unix-ms; BigInt() because the Move call takes a u64
+  strike: usdToScaled(63_000),      // 1e9-scaled strike
+  quantity: contracts(1),           // position size: 1 contract = $1 max payout
+  depositCoinId,                    // object id of a Coin<DUSDC> you own
+  depositAmount: 10_000_000n,       // collateral in µDUSDC (6 decimals → 10 DUSDC); only needs to cover the cost
+  // isUp: false,                   // ← bet DOWN in the same one call
+});
+
+// sign + send with your wallet or keypair — done.
 ```
 
-**Bet UP — one self-contained tx** (`depositCoinId` is a `Coin<DUSDC>` you own):
+That's a real, executable PTB — the same shape that has minted live on testnet.
+
+## What you get
+
+| | |
+|---|---|
+| **`PredictClient`** | One object — a typed indexer, a pricing engine, and ready-to-sign PTB fragments. |
+| **Pricing engine** | Live SVI surface → `N(d2)` digital → Bernoulli spread. The pure math is also importable on its own from `@yosuku/predict/pricing`. **Matched to the chain to a fraction of a cent across the normal regime.** |
+| **PTB builders** | `createManager`, `deposit`/`managerWithdraw`, `mint`/`redeem`/`redeemPermissionless`, `mintRange`, `supply`/`withdrawPlp`, plus inline `marketKey`/`rangeKey`. Arg order verified against the Move source. |
+| **Typed indexer** | Oracles, prices, the SVI surface, positions, managers, vault summary — only the endpoints that actually return data, typed to match the server (numbers are typed as numbers). |
+
+## Pricing you can trust
+
+Don't take the price on faith. `quoteOnChain` reads the contract's authoritative cost via `devInspect` (read-only, no funds, no signing) — so you can cross-check the engine against the chain in a single call:
 
 ```ts
-const tx = predict.openUp({
-  manager, oracle: oracle.oracle_id, expiry: BigInt(oracle.expiry),
-  strike: usdToScaled(63000), quantity: contracts(1),
-  depositCoinId, depositAmount: 10_000_000n,   // split 10 DUSDC out of your coin
+import { SuiGrpcClient } from '@mysten/sui/grpc';
+
+const rpcUrl = 'https://fullnode.testnet.sui.io:443';
+const client = new SuiGrpcClient({ network: 'testnet', baseUrl: rpcUrl });
+
+const onchain = await predict.quoteOnChain(client, rpcUrl, {
+  oracleId: oracle.oracle_id, expiry: BigInt(oracle.expiry),
+  strike: usdToScaled(63_000), isUp: true, quantity: contracts(1),
 });
-// sign + execute tx with your wallet / keypair
+//   → { mintCost, redeemPayout }   ← straight from predict::get_trade_amounts
 ```
 
-**Or compose it inline** (this is exactly the PTB that executed on testnet):
+> `client` (a `SuiGrpcClient`) only encodes the call; `rpcUrl` is the JSON-RPC fullnode that runs the read-only `devInspect`.
+
+Across the **normal regime** (`0.01 < fair < 0.99`) the off-chain engine and the on-chain quote agree to **a fraction of a cent** (≤ 0.018¢). At the deep-ITM/OTM wings the spread model is clamped so the book never crosses (`roundTrip ≥ 0`).
+
+## Compose your own PTB
+
+Need the steps à la carte? Every fragment takes *your* `Transaction`:
 
 ```ts
 import { Transaction } from '@mysten/sui/transactions';
@@ -37,34 +125,66 @@ import { Transaction } from '@mysten/sui/transactions';
 const tx = new Transaction();
 const [chip] = tx.splitCoins(tx.object(depositCoinId), [tx.pure.u64(10_000_000n)]);
 predict.deposit(tx, manager, chip);
-const key = predict.marketKeyUp(tx, oracle.oracle_id, BigInt(oracle.expiry), usdToScaled(63000));
+const key = predict.marketKeyUp(tx, oracle.oracle_id, BigInt(oracle.expiry), usdToScaled(63_000));
 predict.mint(tx, { manager, oracle: oracle.oracle_id, key, quantity: contracts(1) });
-// sign + execute
 ```
-
-> **A note on scaling.** Read APIs (`quote`, surface viewers) take **human USD** (e.g. `63000`). On-chain calls (`openUp`, the builders) take the **1e9-scaled `bigint`** the contract uses — use `usdToScaled(63000)` for strikes and `contracts(1)` for size (1 contract = $1 max payout = `1_000_000` base units). `scaledToUsd()` goes back.
-
-## What's in it
-
-- **`PredictClient`** — PTB fragments for `create_manager`, `deposit`/`withdraw`, `mint`/`redeem`/`redeem_permissionless`, `mint_range`, `supply`/`withdraw` (PLP), and inline `market_key`/`range_key` builders. Verified arg order against the Move source.
-- **Pricing engine** (`@yosuku/predict/pricing`) — decode the live SVI surface, compute the Black-Scholes digital `N(d2)`, the Bernoulli spread, and σ-annualized for surface viewers. Proven against `get_trade_amounts` and a live mint.
-- **Typed indexer** — only the endpoints that actually return data (oracles, prices, SVI, positions, managers, vault summary); the known-null endpoints are omitted by design.
-- **On-chain quote** — `quoteOnChain(...)` reads `get_trade_amounts` via devInspect (no funds) to cross-check the engine.
 
 ## The gas-negative keeper crank
 
+`redeemPermissionless` settles a fully-closed winner for **anyone** — and on full close it's **gas-negative** (the storage rebate exceeds the gas). A keeper that claims winners literally pays for itself:
+
 ```ts
 for (const o of await predict.indexer.settledOracles()) {
-  // diff minted − redeemed, then for each open winner:
   const tx = new Transaction();
   const key = predict.marketKeyUp(tx, o.oracle_id, BigInt(o.expiry), strike);
   predict.redeemPermissionless(tx, { manager, oracle: o.oracle_id, key, quantity });
-  // redeem-on-full-close is gas-NEGATIVE — the crank funds itself.
+  // sign + send — the crank funds itself.
 }
 ```
 
-## Notes
+## Scaling cheatsheet
 
-- Testnet only (Predict is testnet-only; pinned to branch `predict-testnet-4-16`). IDs change at mainnet — override via `new PredictClient({ pkg, predict, ... })`.
-- Quote asset is **DUSDC** (not DEEP, not Spot's DBUSDC); faucet is a [Tally form](https://tally.so/r/Xx102L).
-- MIT.
+The one rule to remember: **read APIs take human USD; on-chain calls take the contract's `1e9`-scaled `bigint`.** Helpers convert both ways.
+
+| You have | You want | Use |
+|---|---|---|
+| `63000` (USD) | a strike for `openUp` / builders | `usdToScaled(63000)` |
+| a `1e9`-scaled strike | USD | `scaledToUsd(s)` |
+| `1` contract ($1 max payout) | size in base units | `contracts(1)` → `1_000_000n` |
+| µDUSDC (e.g. `488934`) | DUSDC | `dusdc(488934)` → `0.488934` |
+
+## API at a glance
+
+**`PredictClient`**
+- **read** — `indexer.*` · `quote(oracleId, strikeUsd)` · `quoteOnChain(client, rpcUrl, args)`
+- **build** — `openUp(args)` · `createManager` · `deposit` · `managerWithdraw` · `mint` · `mintRange` · `redeem` · `redeemPermissionless` · `supply` · `withdrawPlp`
+- **keys** — `marketKeyUp` · `marketKeyDown` · `rangeKey`
+
+**Pricing primitives** — tree-shakable, also at `@yosuku/predict/pricing`:
+
+```ts
+import { decodeSvi, digitalUp, quote, normalCdf } from '@yosuku/predict/pricing';
+```
+
+**Scaling helpers** (main entry `@yosuku/predict` only) — `usdToScaled` · `scaledToUsd` · `contracts` · `dusdc`.
+
+## Good to know
+
+- **Testnet only.** DeepBook Predict is testnet-only (pinned to branch `predict-testnet-4-16`). At mainnet, override the IDs: `new PredictClient({ pkg, predict, registry, ... })`.
+- **Node and browser.** `quoteOnChain` is `Buffer`-free, so it runs in a web app or a keeper alike.
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) — `0.1.0 → 0.1.7`, each release a focused correctness pass (the pricing engine hasn't needed a change since `0.1.0`).
+
+## License
+
+MIT © yosuku
+
+<div align="center">
+
+Built for [Sui Overflow](https://sui.io) · [github.com/yosuku-lab/predict-sdk](https://github.com/yosuku-lab/predict-sdk)
+
+**予測**
+
+</div>
