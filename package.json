@@ -1,6 +1,6 @@
 {
   "name": "@yosuku/predict",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "The first TypeScript SDK for DeepBook Predict — Sui's vol-surface prediction-market protocol. PTB builders, the SVI/N(d2) pricing engine, and a typed indexer client.",
   "license": "MIT",
   "type": "module",
@@ -42,10 +42,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shaibuafeez/yosuku-predict-sdk.git"
+    "url": "git+https://github.com/yosuku-lab/predict-sdk.git"
   },
-  "homepage": "https://github.com/shaibuafeez/yosuku-predict-sdk#readme",
+  "homepage": "https://github.com/yosuku-lab/predict-sdk#readme",
   "bugs": {
-    "url": "https://github.com/shaibuafeez/yosuku-predict-sdk/issues"
+    "url": "https://github.com/yosuku-lab/predict-sdk/issues"
   }
 }
