@@ -4,6 +4,10 @@ All notable changes to `@yosuku/predict`. The pricing engine (SVI / `N(d2)`) has
 been correct since `0.1.0` — every bump since has been a focused correctness pass
 on the indexer types and on-chain helpers, driven by live testing against the chain.
 
+## 0.1.8
+
+- Docs: soften the live-parity wording from a strict `≤ 0.018¢` to "a fraction of a cent (~0.03¢ in testing)" after an independent 9-point live review measured a max diff of `0.02553¢` (the `≤ 0.018¢` was a single-sample figure). No code change.
+
 ## 0.1.7
 
 - Docs: award-winning README rewrite. Fixes the only judge-falsifiable error in the old docs (`@yosuku/predict/pricing` was claimed to export the scaling helpers — it doesn't; they're main-entry only), scopes the "fraction of a cent" accuracy claim to the normal regime, and makes every example copy-paste runnable (declares `manager`/`depositCoinId`, adds a "create a manager" onramp + the `quoteOnChain` client setup). No code change.
@@ -24,7 +28,7 @@ From an adversarial live audit (every finding reproduced against the chain + ser
   clamp produced `upAsk < upBid` for `fair < ~0.005` and `fair > ~0.995`. Now each
   side's bid is derived as `1 − opposite_ask` (matching the chain's
   `quote_spread_from_fair_price`), so `roundTrip ≥ 0` everywhere. Normal regime is
-  unchanged (matches `get_trade_amounts` to ≤ 0.018¢).
+  unchanged (matches `get_trade_amounts` to a fraction of a cent).
 - **`quoteOnChain` / `getTradeAmountsOnChain` is browser-safe.** Replaced the
   Node-only `Buffer.from(...).toString('base64')` with `toBase64` from
   `@mysten/sui/utils` — it no longer throws `Buffer is not defined` in a browser

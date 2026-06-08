@@ -113,7 +113,7 @@ const onchain = await predict.quoteOnChain(client, rpcUrl, {
 
 > `client` (a `SuiGrpcClient`) only encodes the call; `rpcUrl` is the JSON-RPC fullnode that runs the read-only `devInspect`.
 
-Across the **normal regime** (`0.01 < fair < 0.99`) the off-chain engine and the on-chain quote agree to **a fraction of a cent** (≤ 0.018¢). At the deep-ITM/OTM wings the spread model is clamped so the book never crosses (`roundTrip ≥ 0`).
+Across the **normal regime** (`0.01 < fair < 0.99`) the off-chain engine and the on-chain quote agree to **a fraction of a cent** (~0.03¢ across live BTC markets in testing — the residual is mostly spot drift between the two reads, not model error). At the deep-ITM/OTM wings the spread model is clamped so the book never crosses (`roundTrip ≥ 0`).
 
 ## Compose your own PTB
 
@@ -175,7 +175,7 @@ import { decodeSvi, digitalUp, quote, normalCdf } from '@yosuku/predict/pricing'
 
 ## Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md) — `0.1.0 → 0.1.7`, each release a focused correctness pass (the pricing engine hasn't needed a change since `0.1.0`).
+See [CHANGELOG.md](./CHANGELOG.md) — `0.1.0 → 0.1.8`, each release a focused correctness pass (the pricing engine hasn't needed a change since `0.1.0`).
 
 ## License
 
