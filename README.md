@@ -1,18 +1,20 @@
 <div align="center">
 
-# @yosuku/predict
+# @yosuku/deepbook-predict
 
 ### The first TypeScript SDK for [DeepBook Predict](https://docs.sui.io/onchain-finance/deepbook-predict/) — Sui's volatility-surface-priced prediction market.
 
-[![npm](https://img.shields.io/npm/v/@yosuku/predict?color=cb3837&logo=npm)](https://www.npmjs.com/package/@yosuku/predict)
-[![types](https://img.shields.io/badge/types-included-3178c6?logo=typescript&logoColor=white)](https://www.npmjs.com/package/@yosuku/predict)
+[![npm](https://img.shields.io/npm/v/@yosuku/deepbook-predict?color=cb3837&logo=npm)](https://www.npmjs.com/package/@yosuku/deepbook-predict)
+[![types](https://img.shields.io/badge/types-included-3178c6?logo=typescript&logoColor=white)](https://www.npmjs.com/package/@yosuku/deepbook-predict)
 [![Sui](https://img.shields.io/badge/Sui-testnet-4DA2FF)](https://sui.io)
 [![license](https://img.shields.io/badge/license-MIT-blue)](#license)
 
 **Price any strike. Open a position. Crank gas-negative redeems.** In a handful of lines —
 with pricing math cross-checked against the chain's own `get_trade_amounts`.
 
-[**npm**](https://www.npmjs.com/package/@yosuku/predict) · [**Repo**](https://github.com/yosuku-lab/predict-sdk) · [**DeepBook Predict docs**](https://docs.sui.io/onchain-finance/deepbook-predict/)
+[**npm**](https://www.npmjs.com/package/@yosuku/deepbook-predict) · [**Repo**](https://github.com/yosuku-lab/predict-sdk) · [**DeepBook Predict docs**](https://docs.sui.io/onchain-finance/deepbook-predict/)
+
+<sub>_Formerly published as `@yosuku/predict` — same SDK, clearer name._</sub>
 
 </div>
 
@@ -27,12 +29,12 @@ DeepBook Predict prices **every** strike and expiry off a live SVI volatility su
 - `market_key` / `range_key` construction, and
 - the exact PTB argument order for every `mint` / `redeem` / `supply` call.
 
-The official `@mysten/deepbook-v3` SDK ships **none** of it. `@yosuku/predict` is that missing layer — and the pricing engine is **cross-checked against the contract's own `get_trade_amounts`**, so the number you show a user is the number the chain charges.
+The official `@mysten/deepbook-v3` SDK ships **none** of it. `@yosuku/deepbook-predict` is that missing layer — and the pricing engine is **cross-checked against the contract's own `get_trade_amounts`**, so the number you show a user is the number the chain charges.
 
 ## Install
 
 ```bash
-npm install @yosuku/predict @mysten/sui
+npm install @yosuku/deepbook-predict @mysten/sui
 ```
 
 > **Peer dep:** requires `@mysten/sui` `^2.17.0` — the SDK builds PTBs and runs `devInspect` through it.
@@ -59,7 +61,7 @@ const manager = res.objectChanges
 ## Quote a market → open a position
 
 ```ts
-import { PredictClient, usdToScaled, contracts } from '@yosuku/predict';
+import { PredictClient, usdToScaled, contracts } from '@yosuku/deepbook-predict';
 
 const predict = new PredictClient();                          // testnet config baked in
 const oracle  = (await predict.indexer.activeOracles())[0];   // a live BTC market
@@ -90,7 +92,7 @@ That's a real, executable PTB — the same shape that has minted live on testnet
 | | |
 |---|---|
 | **`PredictClient`** | One object — a typed indexer, a pricing engine, and ready-to-sign PTB fragments. |
-| **Pricing engine** | Live SVI surface → `N(d2)` digital → Bernoulli spread. The pure math is also importable on its own from `@yosuku/predict/pricing`. **Matched to the chain to a fraction of a cent across the normal regime.** |
+| **Pricing engine** | Live SVI surface → `N(d2)` digital → Bernoulli spread. The pure math is also importable on its own from `@yosuku/deepbook-predict/pricing`. **Matched to the chain to a fraction of a cent across the normal regime.** |
 | **PTB builders** | `createManager`, `deposit`/`managerWithdraw`, `mint`/`redeem`/`redeemPermissionless`, `mintRange`, `supply`/`withdrawPlp`, plus inline `marketKey`/`rangeKey`. Arg order verified against the Move source. |
 | **Typed indexer** | Oracles, prices, the SVI surface, positions, managers, vault summary — only the endpoints that actually return data, typed to match the server (numbers are typed as numbers). |
 
@@ -160,13 +162,13 @@ The one rule to remember: **read APIs take human USD; on-chain calls take the co
 - **build** — `openUp(args)` · `createManager` · `deposit` · `managerWithdraw` · `mint` · `mintRange` · `redeem` · `redeemPermissionless` · `supply` · `withdrawPlp`
 - **keys** — `marketKeyUp` · `marketKeyDown` · `rangeKey`
 
-**Pricing primitives** — tree-shakable, also at `@yosuku/predict/pricing`:
+**Pricing primitives** — tree-shakable, also at `@yosuku/deepbook-predict/pricing`:
 
 ```ts
-import { decodeSvi, digitalUp, quote, normalCdf } from '@yosuku/predict/pricing';
+import { decodeSvi, digitalUp, quote, normalCdf } from '@yosuku/deepbook-predict/pricing';
 ```
 
-**Scaling helpers** (main entry `@yosuku/predict` only) — `usdToScaled` · `scaledToUsd` · `contracts` · `dusdc`.
+**Scaling helpers** (main entry `@yosuku/deepbook-predict` only) — `usdToScaled` · `scaledToUsd` · `contracts` · `dusdc`.
 
 ## Good to know
 

@@ -1,8 +1,12 @@
 # Changelog
 
-All notable changes to `@yosuku/predict`. The pricing engine (SVI / `N(d2)`) has
+All notable changes to `@yosuku/deepbook-predict`. The pricing engine (SVI / `N(d2)`) has
 been correct since `0.1.0` — every bump since has been a focused correctness pass
 on the indexer types and on-chain helpers, driven by live testing against the chain.
+
+## 0.2.0
+
+- **Renamed: `@yosuku/predict` → `@yosuku/deepbook-predict`.** The name now says exactly what the package is — the SDK *for* DeepBook Predict, not a new prediction-market framework. **No API changes:** identical exports, the same `@yosuku/deepbook-predict/pricing` subpath, the same SVI / `N(d2)` pricing engine. To upgrade, swap the install/import specifier. The old `@yosuku/predict` is deprecated with a pointer here and will receive no further updates.
 
 ## 0.1.8
 
@@ -10,7 +14,7 @@ on the indexer types and on-chain helpers, driven by live testing against the ch
 
 ## 0.1.7
 
-- Docs: award-winning README rewrite. Fixes the only judge-falsifiable error in the old docs (`@yosuku/predict/pricing` was claimed to export the scaling helpers — it doesn't; they're main-entry only), scopes the "fraction of a cent" accuracy claim to the normal regime, and makes every example copy-paste runnable (declares `manager`/`depositCoinId`, adds a "create a manager" onramp + the `quoteOnChain` client setup). No code change.
+- Docs: award-winning README rewrite. Fixes the only judge-falsifiable error in the old docs (`@yosuku/deepbook-predict/pricing` was claimed to export the scaling helpers — it doesn't; they're main-entry only), scopes the "fraction of a cent" accuracy claim to the normal regime, and makes every example copy-paste runnable (declares `manager`/`depositCoinId`, adds a "create a manager" onramp + the `quoteOnChain` client setup). No code change.
 
 ## 0.1.6
 

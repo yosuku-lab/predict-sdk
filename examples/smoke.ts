@@ -51,4 +51,4 @@ predict.mint(tx, { manager: MANAGER, oracle: o.oracle_id, key, quantity: 1_000_0
 const cmds = tx.getData().commands.length;
 console.log(`4) PTB builders: composed a deposit+key+mint PTB (${cmds} commands) ✓`);
 
-console.log('\n@yosuku/predict — live ✓');
+console.log('\n@yosuku/deepbook-predict — live ✓');

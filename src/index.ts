@@ -1,5 +1,5 @@
 /**
- * @yosuku/predict — the first TypeScript SDK for DeepBook Predict.
+ * @yosuku/deepbook-predict — the first TypeScript SDK for DeepBook Predict.
  */
 export { PredictClient } from './client.ts';
 export { PredictIndexer } from './indexer.ts';
