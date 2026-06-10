@@ -1,6 +1,6 @@
 {
   "name": "@yosuku/deepbook-predict",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The first TypeScript SDK for DeepBook Predict — Sui's vol-surface prediction-market protocol. PTB builders, the SVI/N(d2) pricing engine, and a typed indexer client.",
   "license": "MIT",
   "type": "module",
@@ -15,6 +15,10 @@
     "./pricing": {
       "types": "./dist/pricing.d.ts",
       "import": "./dist/pricing.js"
+    },
+    "./memory": {
+      "types": "./dist/memory.d.ts",
+      "import": "./dist/memory.js"
     }
   },
   "files": [
@@ -29,15 +33,20 @@
     "prediction-market",
     "options",
     "svi",
-    "defi"
+    "defi",
+    "agent",
+    "memory",
+    "walrus"
   ],
   "scripts": {
     "build": "tsc"
   },
   "peerDependencies": {
+    "@mysten-incubation/memwal": ">=0.0.7",
     "@mysten/sui": "^2.17.0"
   },
   "devDependencies": {
+    "@mysten-incubation/memwal": "^0.0.7",
     "typescript": "^5.7.0"
   },
   "repository": {
@@ -47,5 +56,10 @@
   "homepage": "https://github.com/yosuku-lab/predict-sdk#readme",
   "bugs": {
     "url": "https://github.com/yosuku-lab/predict-sdk/issues"
+  },
+  "peerDependenciesMeta": {
+    "@mysten-incubation/memwal": {
+      "optional": true
+    }
   }
 }

@@ -144,6 +144,37 @@ for (const o of await predict.indexer.settledOracles()) {
 }
 ```
 
+## Agent memory — your bot stops forgetting
+
+An agent that can't remember its losses repeats them. The `/memory` module gives any Predict agent **semantic memory** — built on [Walrus Memory (MemWal)](https://github.com/MystenLabs/MemWal): every memory is SEAL-encrypted, stored on Walrus, and owned by a Sui account you control. No database, no server.
+
+Needs the optional peer: `npm i @mysten-incubation/memwal`
+
+```ts
+import { AgentMemory } from '@yosuku/deepbook-predict/memory';
+
+// one-time: creates the on-chain account + a delegate key for the agent
+const creds = await AgentMemory.setup({ suiPrivateKey, suiClient });
+
+const memory = await AgentMemory.create(creds);
+
+// record trades with ON-CHAIN PROVENANCE — the lesson carries the tx that taught it
+await memory.rememberTrade({
+  oracle, strike: 63_000, side: 'up', qty: 1, cost: 0.5069,
+  edge: 0.012, reason: 'model probability above vault ask',
+  txDigest, // ← links the memory to the verifiable mint
+});
+await memory.rememberOutcome({ oracle, strike: 63_000, side: 'up', payout: 1.0, pnl: +0.493, txDigest });
+
+// recall by MEANING, not keywords
+const lessons = await memory.recall('what edge do I need near ATM?');
+const history = await memory.recallFor(oracleId);
+```
+
+Design rule baked into the API: **memory shapes what your strategy proposes — it must never be what bounds the agent.** Keep authority in your caps and guards (on-chain where possible); treat lessons as advisory.
+
+> The hosted relayer is a Walrus Foundation **beta** (no SLA) — great for testnet; self-hosting is documented for production.
+
 ## Scaling cheatsheet
 
 The one rule to remember: **read APIs take human USD; on-chain calls take the contract's `1e9`-scaled `bigint`.** Helpers convert both ways.
